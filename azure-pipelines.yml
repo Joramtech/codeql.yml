@@ -1,0 +1,49 @@
+# Universal Windows Platform
+- task: AzureCLI@2
+  inputs:
+    scriptType: 'ps'
+    scriptLocation: 'scriptPath'
+    scriptPath: 
+    powerShellErrorActionPreference: 'continue'
+    addSpnToEnvironment: true
+    useGlobalConfig: true
+    failOnStandardError: true
+    powerShellIgnoreLASTEXITCODE: true
+- task: AzureCloudPowerShellDeployment@1
+  inputs:
+    EnableAdvancedStorageOptions: false
+    ServiceName: 'Azure cloud'
+- task: DotNetCoreCLI@2
+  inputs:
+    command: 'build'    slotName: 'Production'
+    DeploymentLabel: '2.0'
+    AllowUpgrade: true
+# Build a Universal Windows Platform project using Visual Studio.
+# Add steps that test and distribute an app, save build artifacts, and more:
+# https://aka.ms/yaml
+
+trigger:
+- main
+
+pool:
+  vmImage: 'windows-latest'
+
+variables:
+  solution: '**/*.sln'
+  buildPlatform: 'x86|x64|ARM'
+  buildConfiguration: 'Release'
+  appxPackageDir: '$(build.artifactStagingDirectory)\AppxPackages\\'
+
+steps:
+- task: NuGetToolInstaller@1
+
+- task: NuGetCommand@2
+  inputs:
+    restoreSolution: '$(solution)'
+
+- task: VSBuild@1
+  inputs:
+    platform: 'x86'
+    solution: '$(solution)'
+    configuration: '$(buildConfiguration)'
+    msbuildArgs: '/p:AppxBundlePlatforms="$(buildPlatform)" /p:AppxPackageDir="$(appxPackageDir)" /p:AppxBundle=Always /p:UapAppxPackageBuildMode=StoreUpload'
